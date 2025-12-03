@@ -3,8 +3,11 @@ package com.birthdaytracker.repository
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.data.BirthdayDao
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class BirthdayRepository(private val birthdayDao: BirthdayDao) {
+@Singleton
+class BirthdayRepository @Inject constructor(private val birthdayDao: BirthdayDao) {
     fun getAllBirthdays(): Flow<List<Birthday>> = birthdayDao.getAllBirthdays()
     
     suspend fun getBirthdayById(id: Long): Birthday? = birthdayDao.getBirthdayById(id)

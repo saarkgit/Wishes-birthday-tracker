@@ -1,9 +1,13 @@
 package com.birthdaytracker
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -12,68 +16,97 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
-import com.birthdaytracker.data.BirthdayDatabase
 import com.birthdaytracker.navigation.AppNavigation
 import com.birthdaytracker.navigation.Screen
 import com.birthdaytracker.notification.BirthdayNotificationWorker
-import com.birthdaytracker.repository.BirthdayRepository
 import com.birthdaytracker.ui.components.StableTopBar
 import com.birthdaytracker.ui.theme.BirthdayTrackerTheme
-import com.birthdaytracker.util.PreferencesManager
-import com.birthdaytracker.viewmodel.BirthdayViewModel
-import com.birthdaytracker.viewmodel.BirthdayViewModelFactory
 import com.birthdaytracker.viewmodel.SettingsViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission granted, schedule notifications
+            BirthdayNotificationWorker.scheduleNotifications(this)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         // Initialize notification channel
         BirthdayNotificationWorker.createNotificationChannel(this)
-        BirthdayNotificationWorker.scheduleNotifications(this)
-        
-        val database = BirthdayDatabase.getDatabase(this)
-        val repository = BirthdayRepository(database.birthdayDao())
-        val preferencesManager = PreferencesManager(this)
-        
-        setContent {
-            val settingsViewModel: SettingsViewModel = viewModel {
-                SettingsViewModel(preferencesManager)
+
+        // Request notification permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    BirthdayNotificationWorker.scheduleNotifications(this)
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // Show rationale if needed
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                else -> {
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
             }
-            
+        } else {
+            BirthdayNotificationWorker.scheduleNotifications(this)
+        }
+
+        setContent {
+            val settingsViewModel: SettingsViewModel = hiltViewModel()
+
             val themeMode by settingsViewModel.themeMode.collectAsState(initial = "system")
             val defaultView by settingsViewModel.defaultView.collectAsState(initial = "list")
-            
+
             val isDarkTheme = when (themeMode) {
                 "dark" -> true
                 "light" -> false
                 else -> isSystemInDarkTheme()
             }
-            
+
             val startDestination = when (defaultView) {
                 "calendar" -> Screen.CalendarView.route
                 else -> Screen.ListView.route
             }
-            
+
             BirthdayTrackerTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
-                val birthdayViewModel: BirthdayViewModel = viewModel(
-                    factory = BirthdayViewModelFactory(repository)
-                )
-                
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
                         StableTopBar(
-                            title = { Text("Birthday Tracker", style = MaterialTheme.typography.titleLarge) },
+                            title = {
+                                Text(
+                                    getString(R.string.app_name),
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                            },
                             actions = {
-                                IconButton(onClick = {
-                                    navController.navigate(Screen.Settings.route)
-                                }) {
-                                    Icon(Icons.Default.Settings, contentDescription = "Settings")
+                                IconButton(
+                                    onClick = {
+                                        navController.navigate(Screen.Settings.route)
+                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Settings,
+                                        contentDescription = getString(R.string.settings)
+                                    )
                                 }
                             }
                         )
@@ -82,8 +115,6 @@ class MainActivity : ComponentActivity() {
                     AppNavigation(
                         navController = navController,
                         startDestination = startDestination,
-                        birthdayViewModel = birthdayViewModel,
-                        settingsViewModel = settingsViewModel,
                         onThemeChange = { mode ->
                             settingsViewModel.setThemeMode(mode)
                         },
@@ -95,4 +126,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-

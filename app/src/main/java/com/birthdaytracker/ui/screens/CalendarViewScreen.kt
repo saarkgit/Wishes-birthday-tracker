@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -19,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.ui.components.StableTopBar
 import com.birthdaytracker.viewmodel.BirthdayViewModel
@@ -28,7 +31,7 @@ import java.time.LocalDate
 
 @Composable
 fun CalendarViewScreen(
-    viewModel: BirthdayViewModel,
+    viewModel: BirthdayViewModel = hiltViewModel(),
     onAddClick: () -> Unit,
     onDateClick: (LocalDate) -> Unit,
     onBirthdayClick: (Birthday) -> Unit
@@ -58,7 +61,7 @@ fun CalendarViewScreen(
                         IconButton(onClick = {
                             currentMonth = currentMonth.minusMonths(1)
                         }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Previous Month")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack , contentDescription = "Previous Month")
                         }
                         Text(
                             text = currentMonth.format(monthFormatter),
@@ -68,7 +71,7 @@ fun CalendarViewScreen(
                         IconButton(onClick = {
                             currentMonth = currentMonth.plusMonths(1)
                         }) {
-                            Icon(Icons.Default.ArrowForward, contentDescription = "Next Month")
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next Month")
                         }
                     }
                 },

@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.*
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.ui.components.StableTopBar
 import com.birthdaytracker.viewmodel.BirthdayViewModel
@@ -23,7 +26,7 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun ListViewScreen(
-    viewModel: BirthdayViewModel,
+    viewModel: BirthdayViewModel = hiltViewModel(),
     onAddClick: () -> Unit,
     onBirthdayClick: (Birthday) -> Unit
 ) {
@@ -54,7 +57,7 @@ fun ListViewScreen(
                 title = { Text("Birthday Tracker", style = MaterialTheme.typography.titleLarge) },
                 actions = {
                     IconButton(onClick = { showSortMenu = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Sort")
+                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort")
                     }
                     IconButton(onClick = onAddClick) {
                         Icon(Icons.Default.Add, contentDescription = "Add Birthday")
@@ -164,7 +167,7 @@ fun BirthdayRow(
     val today = LocalDate.now()
     val thisYear = birthday.birthDate.withYear(today.year)
     val nextYear = birthday.birthDate.withYear(today.year + 1)
-    val displayDate = if (thisYear >= today) thisYear else nextYear
+    val displayDate = if (thisYear >= today) thisYear else nextYear //here is where you set the age for the birthdays
     val age = java.time.Period.between(birthday.birthDate, displayDate).years
     val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
     
