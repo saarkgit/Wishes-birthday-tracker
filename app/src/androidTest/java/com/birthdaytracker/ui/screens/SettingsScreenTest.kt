@@ -1,7 +1,11 @@
 package com.birthdaytracker.ui.screens
 
-import androidx.compose.ui.test.*
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasParent
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.birthdaytracker.ui.theme.BirthdayTrackerTheme
 import com.birthdaytracker.util.PreferencesManager

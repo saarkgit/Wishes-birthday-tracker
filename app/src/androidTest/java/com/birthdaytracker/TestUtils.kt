@@ -35,7 +35,8 @@ object TestUtils {
             Birthday(
                 id = i.toLong(),
                 name = "Person $i",
-                birthDate = LocalDate.now().minusYears((20 + i % 50).toLong()).plusDays((i * 10 % 365).toLong()),
+                birthDate = LocalDate.now().minusYears((20 + i % 50).toLong())
+                    .plusDays((i * 10 % 365).toLong()),
                 category = listOf("Friend", "Family", "Work", "Other")[i % 4]
             )
         }

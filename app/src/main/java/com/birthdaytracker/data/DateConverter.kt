@@ -14,7 +14,7 @@ class DateConverter {
                 .toLocalDate()
         }
     }
-    
+
     @TypeConverter
     fun dateToTimestamp(date: LocalDate?): Long? {
         return date?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()

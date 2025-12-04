@@ -11,12 +11,10 @@ import com.birthdaytracker.TestUtils
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.data.BirthdayDao
 import com.birthdaytracker.data.BirthdayDatabase
-import com.birthdaytracker.di.AppModule
 import com.birthdaytracker.ui.theme.BirthdayTrackerTheme
 import com.birthdaytracker.viewmodel.BirthdayViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import dagger.hilt.android.testing.UninstallModules
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule

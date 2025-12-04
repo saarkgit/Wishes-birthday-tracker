@@ -1,26 +1,25 @@
 package com.birthdaytracker.ui.screens
 
-import androidx.compose.ui.test.*
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.birthdaytracker.TestUtils
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.data.BirthdayDao
 import com.birthdaytracker.data.BirthdayDatabase
-import com.birthdaytracker.repository.BirthdayRepository
 import com.birthdaytracker.ui.theme.BirthdayTrackerTheme
 import com.birthdaytracker.viewmodel.BirthdayViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -53,19 +52,22 @@ class CalendarViewScreenTest {
         // Insert real test data
         dao.insertBirthday(
             TestUtils.createBirthdayOnDate(
-            LocalDate.now().monthValue,
-            15,
-            "Alice Smith",
-            1995,
-            "Friend"
-        ))
-        dao.insertBirthday(TestUtils.createBirthdayOnDate(
-            LocalDate.now().plusMonths(1).monthValue,
-            10,
-            "Bob Johnson",
-            1990,
-            "Family"
-        ))
+                LocalDate.now().monthValue,
+                15,
+                "Alice Smith",
+                1995,
+                "Friend"
+            )
+        )
+        dao.insertBirthday(
+            TestUtils.createBirthdayOnDate(
+                LocalDate.now().plusMonths(1).monthValue,
+                10,
+                "Bob Johnson",
+                1990,
+                "Family"
+            )
+        )
     }
 
     @Test
@@ -141,7 +143,8 @@ class CalendarViewScreenTest {
         }
 
         val currentMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM yyyy"))
-        val previousMonth = LocalDate.now().minusMonths(1).format(DateTimeFormatter.ofPattern("MMMM yyyy"))
+        val previousMonth =
+            LocalDate.now().minusMonths(1).format(DateTimeFormatter.ofPattern("MMMM yyyy"))
 
         // Click previous month button
         composeTestRule.onNodeWithContentDescription("Previous Month").performClick()
@@ -165,7 +168,8 @@ class CalendarViewScreenTest {
             }
         }
 
-        val nextMonth = LocalDate.now().plusMonths(1).format(DateTimeFormatter.ofPattern("MMMM yyyy"))
+        val nextMonth =
+            LocalDate.now().plusMonths(1).format(DateTimeFormatter.ofPattern("MMMM yyyy"))
 
         // Click next month button
         composeTestRule.onNodeWithContentDescription("Next Month").performClick()

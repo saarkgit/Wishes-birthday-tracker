@@ -8,7 +8,13 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
 import com.birthdaytracker.MainActivity
 import com.birthdaytracker.R
 import com.birthdaytracker.data.Birthday
@@ -63,7 +69,8 @@ class BirthdayNotificationWorker @AssistedInject constructor(
                 val daysUntil = Period.between(today, upcoming).days
 
                 if ((daysUntil == 0 && notificationDayOf) ||
-                    (daysUntil == 7 && notificationWeekBefore)) {
+                    (daysUntil == 7 && notificationWeekBefore)
+                ) {
                     Log.d(TAG, "Showing notification for ${birthday.name}, days until: $daysUntil")
                     showNotification(applicationContext, birthday, daysUntil)
                 }
@@ -76,7 +83,8 @@ class BirthdayNotificationWorker @AssistedInject constructor(
     private fun showNotification(context: Context, birthday: Birthday, daysUntil: Int) {
         createNotificationChannel(context)
 
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -120,7 +128,8 @@ class BirthdayNotificationWorker @AssistedInject constructor(
                 description = context.getString(R.string.notification_channel_description)
             }
 
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (notificationManager.getNotificationChannel(CHANNEL_ID) == null) {
                 notificationManager.createNotificationChannel(channel)
                 Log.d(TAG, "Notification channel created")

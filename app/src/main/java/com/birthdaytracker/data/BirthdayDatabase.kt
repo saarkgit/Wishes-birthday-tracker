@@ -10,11 +10,11 @@ import androidx.room.TypeConverters
 @TypeConverters(DateConverter::class)
 abstract class BirthdayDatabase : RoomDatabase() {
     abstract fun birthdayDao(): BirthdayDao
-    
+
     companion object {
         @Volatile
         private var INSTANCE: BirthdayDatabase? = null
-        
+
         fun getDatabase(context: Context): BirthdayDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(

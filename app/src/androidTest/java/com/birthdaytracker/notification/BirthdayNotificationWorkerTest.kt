@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.Configuration
 import androidx.work.ListenableWorker
-import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -373,7 +372,8 @@ class BirthdayNotificationWorkerTest {
     fun worker_handles_large_number_of_birthdays() = runTest {
         // Insert 100 birthdays with various dates
         for (i in 1..100) {
-            val randomDate = LocalDate.now().plusDays((i % 365).toLong()).minusYears(20 + (i % 50).toLong())
+            val randomDate =
+                LocalDate.now().plusDays((i % 365).toLong()).minusYears(20 + (i % 50).toLong())
             dao.insertBirthday(Birthday(0, "Person$i", randomDate, "Test"))
         }
 

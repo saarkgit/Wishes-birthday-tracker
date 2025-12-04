@@ -2,7 +2,17 @@ package com.birthdaytracker.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -11,10 +21,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,9 +44,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.ui.components.StableTopBar
 import com.birthdaytracker.viewmodel.BirthdayViewModel
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.time.LocalDate
 
 @Composable
 fun CalendarViewScreen(
@@ -38,17 +57,17 @@ fun CalendarViewScreen(
 ) {
     val birthdays by viewModel.birthdays.collectAsState(initial = emptyList())
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-    
+
     val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
     val daysInMonth = currentMonth.lengthOfMonth()
     val firstDayOfMonth = currentMonth.atDay(1)
     val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7
-    
+
     val days = (1..daysInMonth).map { currentMonth.atDay(it) }
-    
+
     val nextUpcoming = viewModel.getNextUpcomingBirthday(birthdays)
     val todayBirthday = birthdays.firstOrNull { viewModel.isToday(it) }
-    
+
     Scaffold(
         topBar = {
             StableTopBar(
@@ -61,7 +80,10 @@ fun CalendarViewScreen(
                         IconButton(onClick = {
                             currentMonth = currentMonth.minusMonths(1)
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack , contentDescription = "Previous Month")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Previous Month"
+                            )
                         }
                         Text(
                             text = currentMonth.format(monthFormatter),
@@ -71,7 +93,10 @@ fun CalendarViewScreen(
                         IconButton(onClick = {
                             currentMonth = currentMonth.plusMonths(1)
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next Month")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = "Next Month"
+                            )
                         }
                     }
                 },
@@ -105,7 +130,7 @@ fun CalendarViewScreen(
                     )
                 }
             }
-            
+
             // Calendar days
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
@@ -118,20 +143,20 @@ fun CalendarViewScreen(
                 items(firstDayOfWeek) {
                     Spacer(modifier = Modifier.size(48.dp))
                 }
-                
+
                 items(
                     items = days,
                     key = { it.toString() }
                 ) { date ->
                     val dayBirthdays = birthdays.filter { birthday ->
                         birthday.birthDate.month == date.month &&
-                        birthday.birthDate.dayOfMonth == date.dayOfMonth
+                                birthday.birthDate.dayOfMonth == date.dayOfMonth
                     }
                     val isToday = date == LocalDate.now()
                     val hasBirthday = dayBirthdays.isNotEmpty()
                     val isUpcoming = dayBirthdays.any { nextUpcoming?.id == it.id }
                     val isTodayBirthday = dayBirthdays.any { todayBirthday?.id == it.id }
-                    
+
                     Box(
                         modifier = Modifier
                             .size(48.dp)
@@ -173,11 +198,11 @@ fun CalendarViewScreen(
                     }
                 }
             }
-            
+
             // Birthday list for selected month
             if (days.any { day ->
-                birthdays.any { it.birthDate.month == day.month && it.birthDate.dayOfMonth == day.dayOfMonth }
-            }) {
+                    birthdays.any { it.birthDate.month == day.month && it.birthDate.dayOfMonth == day.dayOfMonth }
+                }) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Birthdays this month:",
@@ -214,7 +239,7 @@ fun CalendarBirthdayItem(
         isUpcoming -> Color(0xFFFF9800).copy(alpha = 0.3f) // Orange
         else -> MaterialTheme.colorScheme.surface
     }
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
