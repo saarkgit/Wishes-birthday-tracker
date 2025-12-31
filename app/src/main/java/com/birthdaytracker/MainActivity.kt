@@ -170,7 +170,7 @@ class MainActivity : ComponentActivity() {
                         onThemeChange = { mode ->
                             settingsViewModel.setThemeMode(mode)
                         },
-                        isDarkTheme = isDarkTheme,
+//                        isDarkTheme = isDarkTheme,
                         modifier = Modifier.padding(paddingValues)
                     )
                 }

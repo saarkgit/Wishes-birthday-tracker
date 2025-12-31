@@ -1,5 +1,6 @@
 package com.birthdaytracker.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,7 +32,7 @@ fun AppNavigation(
     navController: NavHostController,
     startDestination: String,
     onThemeChange: (String) -> Unit,
-    isDarkTheme: Boolean,
+//    isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
@@ -87,30 +88,34 @@ fun AppNavigation(
                 val settingsViewModel: SettingsViewModel = hiltViewModel()
                 val defaultView by settingsViewModel.defaultView.collectAsState(initial = "list")
 
+                val navigateBack: () -> Unit = {
+
+                    val targetRoute = when (defaultView) {
+                        "calendar" -> Screen.CalendarView.route
+                        else -> Screen.ListView.route
+                    }
+                    // Optimization: check if the screen we're returning to matches our preference
+                    val previousRoute = navController.previousBackStackEntry?.destination?.route
+
+                    if (previousRoute == targetRoute) {
+                        // No extra work needed: just pop back to the existing screen
+                        navController.popBackStack()
+                    } else {
+                        // Preference changed: navigate to the new view and reset the stack
+                        navController.navigate(targetRoute) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                }
+
+                BackHandler(onBack = navigateBack)
+
                 SettingsScreen(
                     settingsViewModel = settingsViewModel,
-                    onBack = {
-                        val targetRoute = when (defaultView) {
-                            "calendar" -> Screen.CalendarView.route
-                            else -> Screen.ListView.route
-                        }
-
-                        // Optimization: check if the screen we're returning to matches our preference
-                        val previousRoute = navController.previousBackStackEntry?.destination?.route
-
-                        if (previousRoute == targetRoute) {
-                            // No extra work needed: just pop back to the existing screen
-                            navController.popBackStack()
-                        } else {
-                            // Preference changed: navigate to the new view and reset the stack
-                            navController.navigate(targetRoute) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                        }
-                    },
+                    onBack = navigateBack,
                     onThemeChange = onThemeChange
                 )
             }
