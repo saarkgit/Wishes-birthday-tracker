@@ -10,12 +10,13 @@ plugins {
 
 android {
     namespace = "com.birthdaytracker"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.birthdaytracker"
         minSdk = 31
-        targetSdk = 34
+        //noinspection EditedTargetSdkVersion
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -39,7 +40,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Enables code-related app optimization.
+            isMinifyEnabled = true
+
+            // Enables resource shrinking.
+            isShrinkResources = true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
