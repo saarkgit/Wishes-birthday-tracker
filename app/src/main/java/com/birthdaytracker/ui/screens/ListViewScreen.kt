@@ -1,17 +1,40 @@
 package com.birthdaytracker.ui.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,11 +75,12 @@ fun ListViewScreen(
         val sorted = when (sortOption) {
             SortOption.DATE -> filteredBirthdays.sortedWith(compareBy { birthday ->
                 val today = LocalDate.now()
-                val thisYear = birthday.birthDate.withYear(today.year)
-                val nextYear = birthday.birthDate.withYear(today.year + 1)
+                val thisYear = birthday.birthMonthDay.atYear(today.year)
+                val nextYear = birthday.birthMonthDay.atYear(today.year + 1)
                 val upcoming = if (thisYear >= today) thisYear else nextYear
                 upcoming.toEpochDay()
             })
+
             SortOption.NAME -> filteredBirthdays.sortedBy { it.name }
             SortOption.CATEGORY -> filteredBirthdays.sortedBy { it.category }
         }
@@ -135,13 +159,17 @@ fun ListViewScreen(
                             "Name",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f).padding(end = 8.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp)
                         )
                         Text(
                             "Date",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f).padding(end = 8.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp)
                         )
                         Text(
                             "Category",
@@ -221,13 +249,23 @@ fun BirthdayRow(
     val today = LocalDate.now()
 
     // Calculate current age (how old they are TODAY)
-    val currentAge = if (birthday.birthDate.isAfter(today)) {
-        0
-    } else {
+    val currentAge = if (birthday.birthYear != null) {
+        val today = LocalDate.now()
         java.time.Period.between(birthday.birthDate, today).years
+    } else {
+        null
     }
-
-    val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
+    val displayDate = if (birthday.birthYear != null) {
+        LocalDate.of(
+            birthday.birthYear,
+            birthday.birthMonthDay.monthValue,
+            birthday.birthMonthDay.dayOfMonth
+        )
+            .format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+    } else {
+        birthday.birthMonthDay.format(DateTimeFormatter.ofPattern("MMM dd"))
+    }
+//    val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
     Card(
         modifier = Modifier
@@ -246,20 +284,26 @@ fun BirthdayRow(
             Text(
                 text = birthday.name,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f).padding(end = 8.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
             )
             Column(
-                modifier = Modifier.weight(1f).padding(end = 8.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
             ) {
                 Text(
-                    text = birthday.birthDate.format(formatter),
+                    text = displayDate,
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Text(
-                    text = "Age $currentAge",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+                if (currentAge != null) {
+                    Text(
+                        text = "Age $currentAge",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
             }
             Text(
                 text = birthday.category.ifEmpty { "-" },

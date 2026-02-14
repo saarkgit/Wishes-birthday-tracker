@@ -1,25 +1,59 @@
 package com.birthdaytracker.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.birthdaytracker.R
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.viewmodel.BirthdayViewModel
-import com.vanpra.composematerialdialogs.datetime.date.datepicker
-import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import java.time.Instant
+//import com.vanpra.composematerialdialogs.datetime.date.datepicker
+//import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.MonthDay
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,12 +65,17 @@ fun AddEditBirthdayScreen(
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
-    var birthDate by remember { mutableStateOf(LocalDate.now().minusYears(25)) }
+    var birthMonthDay by remember { mutableStateOf(MonthDay.now()) }
+    var birthYear by remember { mutableStateOf<Int?>(LocalDate.now().year - 25) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
 
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
-    val dateDialogState = rememberMaterialDialogState()
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    var useManualInput by remember { mutableStateOf(false) }
+    var dateText by remember { mutableStateOf("") }
+//    val dateFormatter = DateTimeFormatter.ofPattern("MMM dd")
+//    val dateDialogState = rememberMaterialDialogState()
 
     var loadedBirthday by remember { mutableStateOf<Birthday?>(null) }
 
@@ -66,7 +105,8 @@ fun AddEditBirthdayScreen(
                 loadedBirthday = it
                 name = it.name
                 category = it.category
-                birthDate = it.birthDate
+                birthMonthDay = it.birthMonthDay
+                birthYear = it.birthYear
             }
         }
     }
@@ -106,7 +146,7 @@ fun AddEditBirthdayScreen(
                         }
                         TextButton(
                             onClick = {
-                                val validationError = viewModel.validateBirthday(name, birthDate)
+                                val validationError = viewModel.validateBirthday(name, birthMonthDay, birthYear)
                                 if (validationError != null) {
                                     nameError = validationError
                                     return@TextButton
@@ -117,7 +157,9 @@ fun AddEditBirthdayScreen(
                                         loadedBirthday!!.copy(
                                             name = name.trim(),
                                             category = category.trim(),
-                                            birthDate = birthDate
+                                            birthDay = birthMonthDay.dayOfMonth,
+                                            birthMonth = birthMonthDay.monthValue,
+                                            birthYear = birthYear
                                         )
                                     )
                                 } else {
@@ -125,7 +167,9 @@ fun AddEditBirthdayScreen(
                                         Birthday(
                                             name = name.trim(),
                                             category = category.trim(),
-                                            birthDate = birthDate
+                                            birthDay = birthMonthDay.dayOfMonth,
+                                            birthMonth = birthMonthDay.monthValue,
+                                            birthYear = birthYear
                                         )
                                     )
                                 }
@@ -179,10 +223,42 @@ fun AddEditBirthdayScreen(
             )
 
             OutlinedButton(
-                onClick = { dateDialogState.show() },
+                onClick = { showDatePicker = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("${stringResource(R.string.select_date)}: ${birthDate.format(dateFormatter)}")
+                val displayDate = if (birthYear != null) {
+                    LocalDate.of(birthYear!!, birthMonthDay.monthValue, birthMonthDay.dayOfMonth)
+                        .format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                } else {
+                    birthMonthDay.format(DateTimeFormatter.ofPattern("MMM dd"))
+                }
+                Text("${stringResource(R.string.select_date)}: $displayDate")
+            }
+
+            //new
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = birthYear != null,
+                    onCheckedChange = { isChecked ->
+                        birthYear = if (isChecked) LocalDate.now().year - 25 else null
+                    }
+                )
+                Text("Include birth year")
+            }
+
+            if (birthYear != null) {
+                OutlinedTextField(
+                    value = birthYear?.toString() ?: "",
+                    onValueChange = {
+                        birthYear = it.toIntOrNull()
+                    },
+                    label = { Text("Birth Year") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -214,22 +290,60 @@ fun AddEditBirthdayScreen(
         )
     }
 
-    com.vanpra.composematerialdialogs.MaterialDialog(
-        dialogState = dateDialogState,
-        buttons = {
-            positiveButton("Ok") { dateDialogState.hide() }
-            negativeButton(stringResource(R.string.cancel)) { dateDialogState.hide() }
-        }
-    ) {
-        datepicker(
-            initialDate = birthDate,
-            title = stringResource(R.string.select_date),
-            yearRange = (LocalDate.now().year - 150)..LocalDate.now().year,
-            onDateChange = {
-                if (!it.isAfter(LocalDate.now())) {
-                    birthDate = it
+    if (showDatePicker) {
+        val initialDate = birthMonthDay.atYear(LocalDate.now().year)
+
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialDate
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val pickedDate = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+
+                        birthMonthDay = MonthDay.of(
+                            pickedDate.monthValue,
+                            pickedDate.dayOfMonth
+                        )
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
                 }
             }
-        )
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
+//    com.vanpra.composematerialdialogs.MaterialDialog(
+//        dialogState = dateDialogState,
+//        buttons = {
+//            positiveButton("Ok") { dateDialogState.hide() }
+//            negativeButton(stringResource(R.string.cancel)) { dateDialogState.hide() }
+//        }
+//    ) {
+//        datepicker(
+//            initialDate = birthDate,
+//            title = stringResource(R.string.select_date),
+//            yearRange = (LocalDate.now().year - 150)..LocalDate.now().year,
+//            onDateChange = {
+//                if (!it.isAfter(LocalDate.now())) {
+//                    birthDate = it
+//                }
+//            }
+//        )
+//    }
 }

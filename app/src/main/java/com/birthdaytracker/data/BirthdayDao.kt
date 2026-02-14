@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BirthdayDao {
-    @Query("SELECT * FROM birthdays ORDER BY birthDate ASC")
+    @Query("SELECT * FROM birthdays ORDER BY birthMonth ASC, birthDay ASC")
     fun getAllBirthdays(): Flow<List<Birthday>>
 
     @Query("SELECT * FROM birthdays WHERE id = :id")
@@ -25,4 +25,3 @@ interface BirthdayDao {
     @Delete
     suspend fun deleteBirthday(birthday: Birthday)
 }
-

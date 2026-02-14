@@ -2,7 +2,17 @@ package com.birthdaytracker.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -13,8 +23,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,9 +47,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.viewmodel.BirthdayViewModel
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.time.LocalDate
 
 @Composable
 fun CalendarViewScreen(
@@ -121,8 +144,8 @@ fun CalendarViewScreen(
                     key = { it.toString() }
                 ) { date ->
                     val dayBirthdays = birthdays.filter { birthday ->
-                        birthday.birthDate.month == date.month &&
-                                birthday.birthDate.dayOfMonth == date.dayOfMonth
+                        birthday.birthMonthDay.month == date.month &&
+                                birthday.birthMonthDay.dayOfMonth == date.dayOfMonth
                     }
                     val isToday = date == LocalDate.now()
                     val hasBirthday = dayBirthdays.isNotEmpty()
@@ -183,13 +206,19 @@ fun CalendarViewScreen(
             ) {
                 if (selectedDate != null) {
                     val selectedBirthdays = birthdays.filter {
-                        it.birthDate.month == selectedDate!!.month &&
-                                it.birthDate.dayOfMonth == selectedDate!!.dayOfMonth
+                        it.birthMonthDay.month == selectedDate!!.month &&
+                                it.birthMonthDay.dayOfMonth == selectedDate!!.dayOfMonth
                     }
 
                     item {
                         Text(
-                            text = "Birthdays on ${selectedDate!!.format(DateTimeFormatter.ofPattern("MMMM d"))}:",
+                            text = "Birthdays on ${
+                                selectedDate!!.format(
+                                    DateTimeFormatter.ofPattern(
+                                        "MMMM d"
+                                    )
+                                )
+                            }:",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -209,8 +238,8 @@ fun CalendarViewScreen(
                     }
                 } else {
                     val monthBirthdays = birthdays
-                        .filter { it.birthDate.month == currentMonth.month }
-                        .sortedBy { it.birthDate.dayOfMonth }
+                        .filter { it.birthMonthDay.month == currentMonth.month }
+                        .sortedBy { it.birthMonthDay.dayOfMonth }
 
                     if (monthBirthdays.isNotEmpty()) {
                         item {
@@ -244,10 +273,11 @@ fun EnlargedBirthdayCard(
     val today = LocalDate.now()
 
     // Calculate current age (how old they are TODAY)
-    val currentAge = if (birthday.birthDate.isAfter(today)) {
-        0
-    } else {
+    val currentAge = if (birthday.birthYear != null) {
+        val today = LocalDate.now()
         java.time.Period.between(birthday.birthDate, today).years
+    } else {
+        null
     }
 
     Card(
@@ -269,10 +299,12 @@ fun EnlargedBirthdayCard(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Age: $currentAge",
-                style = MaterialTheme.typography.titleLarge
-            )
+            if (currentAge != null) {
+                Text("Age: $currentAge", style = MaterialTheme.typography.titleLarge)
+            }
+//            else {
+//                Text("Year unknown", style = MaterialTheme.typography.bodySmall)
+//            }
             if (birthday.category.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -295,10 +327,11 @@ fun CalendarBirthdayItem(
     val today = LocalDate.now()
 
     // Calculate current age (how old they are TODAY)
-    val currentAge = if (birthday.birthDate.isAfter(today)) {
-        0
-    } else {
+    val currentAge = if (birthday.birthYear != null) {
+        val today = LocalDate.now()
         java.time.Period.between(birthday.birthDate, today).years
+    } else {
+        null
     }
 
     val backgroundColor = when {
@@ -338,14 +371,19 @@ fun CalendarBirthdayItem(
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "${birthday.birthDate.month.name.take(3)} ${birthday.birthDate.dayOfMonth}",
+                    text = "${birthday.birthMonthDay.month.name.take(3)} ${birthday.birthMonthDay.dayOfMonth}",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Text(
-                    text = "Age $currentAge",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                if (currentAge != null) {
+                    Text(
+                        text = "Age $currentAge",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+//                else {
+//                    Text("Year unknown", style = MaterialTheme.typography.bodySmall)
+//                }
             }
         }
     }

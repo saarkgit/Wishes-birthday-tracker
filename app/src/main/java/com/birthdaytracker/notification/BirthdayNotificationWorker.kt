@@ -8,7 +8,13 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
 import com.birthdaytracker.MainActivity
 import com.birthdaytracker.R
 import com.birthdaytracker.repository.BirthdayRepository
@@ -146,12 +152,12 @@ class BirthdayNotificationWorker @AssistedInject constructor(
         }
 
         private fun calculateInitialDelay(): Long {
-            val now = java.time.LocalDate.now()
-            val targetTime = now.atTime(9, 0)
-            val currentTime = java.time.LocalDate.now().atStartOfDay()
+            val now = java.time.LocalDateTime.now()
+            val targetTime = java.time.LocalDate.now().atTime(9, 0)
 
-            var delay = java.time.Duration.between(currentTime, targetTime).toMillis()
+            var delay = java.time.Duration.between(now, targetTime).toMillis()
             if (delay < 0) {
+                // If 9 AM already passed today, schedule for 9 AM tomorrow
                 delay += TimeUnit.DAYS.toMillis(1)
             }
             return delay

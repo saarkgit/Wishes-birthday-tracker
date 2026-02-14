@@ -4,7 +4,6 @@ import android.content.Context
 import com.birthdaytracker.data.BirthdayDao
 import com.birthdaytracker.data.BirthdayDatabase
 import com.birthdaytracker.repository.BirthdayRepository
-import com.birthdaytracker.util.PreferencesManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,11 +31,5 @@ object AppModule {
     @Singleton
     fun provideBirthdayRepository(birthdayDao: BirthdayDao): BirthdayRepository {
         return BirthdayRepository(birthdayDao)
-    }
-
-    @Provides
-    @Singleton
-    fun providePreferencesManager(@ApplicationContext context: Context): PreferencesManager {
-        return PreferencesManager(context)
     }
 }

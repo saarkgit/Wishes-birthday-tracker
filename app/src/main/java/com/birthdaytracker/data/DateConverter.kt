@@ -20,4 +20,3 @@ class DateConverter {
         return date?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
     }
 }
-

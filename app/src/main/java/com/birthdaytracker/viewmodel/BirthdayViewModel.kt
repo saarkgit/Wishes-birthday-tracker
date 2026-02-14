@@ -4,12 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.birthdaytracker.data.Birthday
 import com.birthdaytracker.repository.BirthdayRepository
-import com.birthdaytracker.util.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.DateTimeException
 import java.time.LocalDate
-import java.time.Period
+import java.time.MonthDay
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 enum class SortOption {
@@ -108,13 +114,13 @@ class BirthdayViewModel @Inject constructor(
         }
     }
 
-    fun validateBirthday(name: String, birthDate: LocalDate): String? {
+    fun validateBirthday(name: String, birthMonthDay: MonthDay, birthYear: Int?): String? {
         return when {
             name.isBlank() -> "Name cannot be empty"
             name.length < 2 -> "Name must be at least 2 characters"
             name.length > 100 -> "Name must be less than 100 characters"
-            birthDate.isAfter(LocalDate.now()) -> "Birth date cannot be in the future"
-            birthDate.isBefore(LocalDate.now().minusYears(150)) -> "Birth date seems invalid"
+            birthYear != null && birthYear > LocalDate.now().year -> "Birth year cannot be in the future"
+            birthYear != null && birthYear < LocalDate.now().year - 150 -> "Birth year seems invalid"
             else -> null
         }
     }
@@ -123,22 +129,38 @@ class BirthdayViewModel @Inject constructor(
         val today = LocalDate.now()
         return birthdays
             .filter { birthday ->
-                val thisYear = birthday.birthDate.withYear(today.year)
-                val nextYear = birthday.birthDate.withYear(today.year + 1)
+                val thisYear = try {
+                    birthday.birthMonthDay.atYear(today.year)
+                } catch (e: DateTimeException) {
+                    LocalDate.of(today.year, 2, 28)
+                }
+                val nextYear = try {
+                    birthday.birthMonthDay.atYear(today.year + 1)
+                } catch (e: DateTimeException) {
+                    LocalDate.of(today.year + 1, 2, 28)
+                }
                 val upcoming = if (thisYear >= today) thisYear else nextYear
                 upcoming >= today
             }
             .minByOrNull { birthday ->
-                val thisYear = birthday.birthDate.withYear(today.year)
-                val nextYear = birthday.birthDate.withYear(today.year + 1)
+                val thisYear = try {
+                    birthday.birthMonthDay.atYear(today.year)
+                } catch (e: DateTimeException) {
+                    LocalDate.of(today.year, 2, 28)
+                }
+                val nextYear = try {
+                    birthday.birthMonthDay.atYear(today.year + 1)
+                } catch (e: DateTimeException) {
+                    LocalDate.of(today.year + 1, 2, 28)
+                }
                 val upcoming = if (thisYear >= today) thisYear else nextYear
-                Period.between(today, upcoming).days
+                ChronoUnit.DAYS.between(today, upcoming)
             }
     }
 
     fun isToday(birthday: Birthday): Boolean {
         val today = LocalDate.now()
-        return birthday.birthDate.month == today.month &&
-                birthday.birthDate.dayOfMonth == today.dayOfMonth
+        return birthday.birthMonthDay.month == today.month &&
+                birthday.birthMonthDay.dayOfMonth == today.dayOfMonth
     }
 }
