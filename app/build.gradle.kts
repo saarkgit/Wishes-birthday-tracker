@@ -93,6 +93,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.compose.material3:material3:1.4.0")
     // Core Android
 //    androidTestImplementation("org.robolectric:robolectric:4.9")
 //    androidTestUtil("androidx.test:orchestrator:1.6.1")

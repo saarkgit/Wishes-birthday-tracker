@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,7 +18,11 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,9 +57,13 @@ import java.time.Instant
 //import com.vanpra.composematerialdialogs.datetime.date.datepicker
 //import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import java.time.LocalDate
+import java.time.Month
 import java.time.format.DateTimeFormatter
 import java.time.MonthDay
+import java.time.YearMonth
 import java.time.ZoneId
+import java.time.format.TextStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -249,18 +259,6 @@ fun AddEditBirthdayScreen(
                 Text("Include birth year")
             }
 
-            if (birthYear != null) {
-                OutlinedTextField(
-                    value = birthYear?.toString() ?: "",
-                    onValueChange = {
-                        birthYear = it.toIntOrNull()
-                    },
-                    label = { Text("Birth Year") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            }
-
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -290,10 +288,22 @@ fun AddEditBirthdayScreen(
         )
     }
 
+//    if (showDatePicker) {
+//        MonthDayPickerDialog(
+//            initial = birthMonthDay,
+//            onDismiss = { showDatePicker = false },
+//            onConfirm = { newValue ->
+//                birthMonthDay = newValue
+//                showDatePicker = false
+//            }
+//        )
+//    }
+
     if (showDatePicker) {
         val initialDate = birthMonthDay.atYear(LocalDate.now().year)
 
         val datePickerState = rememberDatePickerState(
+            yearRange = (LocalDate.now().year - 150)..LocalDate.now().year,
             initialSelectedDateMillis = initialDate
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant()
@@ -328,6 +338,8 @@ fun AddEditBirthdayScreen(
             DatePicker(state = datePickerState)
         }
     }
+
+
 //    com.vanpra.composematerialdialogs.MaterialDialog(
 //        dialogState = dateDialogState,
 //        buttons = {
@@ -347,3 +359,116 @@ fun AddEditBirthdayScreen(
 //        )
 //    }
 }
+/*
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MonthDayPickerDialog(
+    initial: MonthDay,
+    onDismiss: () -> Unit,
+    onConfirm: (MonthDay) -> Unit
+) {
+    val months = Month.entries
+
+    var selectedMonth by remember { mutableStateOf(initial.month) }
+    var selectedDay by remember { mutableIntStateOf(initial.dayOfMonth) }
+
+    var monthExpanded by remember { mutableStateOf(false) }
+    var dayExpanded by remember { mutableStateOf(false) }
+
+    val daysInMonth = YearMonth.of(2000, selectedMonth).lengthOfMonth()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select birthday") },
+        text = {
+            Column {
+
+                // MONTH DROPDOWN
+                ExposedDropdownMenuBox(
+                    expanded = monthExpanded,
+                    onExpandedChange = { monthExpanded = !monthExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedMonth.getDisplayName(TextStyle.FULL, Locale.getDefault()),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Month") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = monthExpanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+
+                    DropdownMenu(
+                        expanded = monthExpanded,
+                        onDismissRequest = { monthExpanded = false }
+                    ) {
+                        months.forEach { month ->
+                            DropdownMenuItem(
+                                text = { Text(month.getDisplayName(TextStyle.FULL, Locale.getDefault())) },
+                                onClick = {
+                                    selectedMonth = month
+                                    if (selectedDay > YearMonth.of(2000, month).lengthOfMonth()) {
+                                        selectedDay = YearMonth.of(2000, month).lengthOfMonth()
+                                    }
+                                    monthExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // DAY DROPDOWN
+                ExposedDropdownMenuBox(
+                    expanded = dayExpanded,
+                    onExpandedChange = { dayExpanded = !dayExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedDay.toString(),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Day") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = dayExpanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+
+                    DropdownMenu(
+                        expanded = dayExpanded,
+                        onDismissRequest = { dayExpanded = false }
+                    ) {
+                        (1..daysInMonth).forEach { day ->
+                            DropdownMenuItem(
+                                text = { Text(day.toString()) },
+                                onClick = {
+                                    selectedDay = day
+                                    dayExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onConfirm(MonthDay.of(selectedMonth, selectedDay))
+            }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+*/
